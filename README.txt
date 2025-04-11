@@ -6,7 +6,7 @@ Feel free to rename sections.
     /* ... */
 
 2. Communications and data transfer:
-    /* kur */
+    /* ... */
 
 3. Visualization and security:
     /* ... */
