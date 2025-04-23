@@ -66,6 +66,9 @@ target_link_libraries(rvs-cam-to-web-testapp
 )
 
 # Install compiled objects to the specified directory
-install(TARGETS rvs-cam-to-web-testapp
+install(TARGETS
+    rvs-cam-to-web-testapp
+    rvs-signal-emitter
+    rvs-signal-callbacks
     DESTINATION ${CMAKE_SOURCE_DIR}/out
 )
