@@ -1,71 +1,80 @@
 #include <gst/gst.h>
 #include <gst/rtsp-server/rtsp-server.h>
-
 #include "RvsSignalCallbacks.h"
+#include "RvsTcpListener.h"
+#include "RvsSignalEmitter.h"
 
-#define GST_LINE "videotestsrc name=source ! video/x-raw,framerate=30/1,width=640,height=480 !     \
-        videoconvert ! x264enc tune=zerolatency speed-preset=ultrafast bitrate=2048 !               \
-        rtph264pay name=pay0 pt=96 config-interval=1"
+#define GST_LINE "videotestsrc name=source ! video/x-raw,framerate=30/1,width=640,height=480 ! " \
+                 "videoconvert ! x264enc tune=zerolatency speed-preset=ultrafast bitrate=2048 ! " \
+                 "rtph264pay name=pay0 pt=96 config-interval=1"
+
+static TcpListenerContext *listener_ctx = NULL;
+
+void media_configure(GstRTSPMediaFactory *factory, GstRTSPMedia *media, gpointer user_data) {
+    GstElement *pipeline = gst_rtsp_media_get_element(media);
+    GstElement *src = gst_bin_get_by_name(GST_BIN(pipeline), "source");
+
+    if (src) {
+        int *pattern = (int *)user_data;
+        g_print("Initial pattern set to %d\n", *pattern);
+        g_object_set(src, "pattern", *pattern, NULL);
+        gst_object_unref(src);
+    }
+
+    if (listener_ctx) {
+        listener_ctx->media = media;
+    }
+}
 
 int main(int argc, char *argv[]) {
+    gst_init(&argc, &argv);
 
-    int test_in = 1;
-    gpointer srcconfig = &test_in;
-
-    /* Initialize GStreamer */
-    gst_init (&argc, &argv);
-
-    /* Create a custom signal emitter object and bind custom signal to a custom callback */
-    CustomSignalEmitter *emitter = g_object_new(TYPE_CUSTOM_SIGNAL_EMITTER, NULL);
-    g_signal_connect(emitter, "my-custom-signal", G_CALLBACK(on_my_custom_signal), NULL);
-
-    /*
-     * TODO: THE FOLLOWING CALLS EMIT THE SIGNAL. MOVE TO A CASE THAT RECEIVES TCP COMMANDS FROM SERVER
-     * emit the custom signal in the main loop !!!
-     *
-     * CustomSignalEmitter *emitter = (CustomSignalEmitter *)userdata;  // Passed via user_data
-     * g_signal_emit_by_name(emitter, "my-custom-signal");
-     */
-
-    /* Create the RTSP server */
-    GstRTSPServer *server = gst_rtsp_server_new();
-
-    if (NULL == argv[1] || NULL == argv[2]) {
-        g_print("Provide argv[1] = ip; argv[2] = port\n");
+    if (argc < 3) {
+        g_print("Usage: %s <IP> <PORT>\n", argv[0]);
         return -1;
     }
 
-    /* Set the ip and port to bind the RTSP server */
-    gst_rtsp_server_set_address (server, argv[1]);       /* Specify the IP address */
-    gst_rtsp_server_set_service (server, argv[2]);       /* Specify the port */
+    const char *ip = argv[1];
+    const char *port = argv[2];
 
-    /* Get the mount points to attach media factory */
+    // Custom signal emitter
+    CustomSignalEmitter *emitter = g_object_new(TYPE_CUSTOM_SIGNAL_EMITTER, NULL);
+
+    // Command buffer
+    static char command_buffer[16] = {0};
+
+    // Create RTSP server
+    GstRTSPServer *server = gst_rtsp_server_new();
+    gst_rtsp_server_set_address(server, ip);
+    gst_rtsp_server_set_service(server, port);
+
+    // Mount points and factory
     GstRTSPMountPoints *mounts = gst_rtsp_server_get_mount_points(server);
-
-    /* Create a media factory for the stream */
     GstRTSPMediaFactory *factory = gst_rtsp_media_factory_new();
 
-    /* used to demonstrate callback connection to change the pipeline on signal media-configure */
-    g_signal_connect (factory, "media-configure", G_CALLBACK(media_configure), srcconfig);
+    // Create listener context
+    listener_ctx = g_new0(TcpListenerContext, 1);
+    listener_ctx->emitter = emitter;
+    listener_ctx->command_buffer = &command_buffer;
 
-    /*
-     * TODO: Find a place for this:
-     * g_signal_connect (factory, "media-configure", G_CALLBACK(media_configure), emitter);
-     */
+    // Connect custom signal
+    g_signal_connect(emitter, "my-custom-signal", G_CALLBACK(on_my_custom_signal), listener_ctx);
 
-    /* Set the launch string for the media pipeline (video source, encoding, etc) */
+    // Connect media-configure to capture media and set initial pattern
+    g_signal_connect(factory, "media-configure", G_CALLBACK(media_configure), &command_buffer);
+
+    // Set pipeline launch description
     gst_rtsp_media_factory_set_launch(factory, GST_LINE);
-
-    /* Attach the factory to a mount point */
     gst_rtsp_mount_points_add_factory(mounts, "/cam", factory);
 
-    /* Attach the server to the default main context (using glib's main loop) */
+    // Attach server
     gst_rtsp_server_attach(server, NULL);
+    g_print("RTSP server is live at rtsp://%s:%s/cam\n", ip, port);
 
-    /* Print server details */
-    g_print("RTSP server is live at rtsp://%s:%s/cam\n", argv[1], argv[2]);
+    // Start TCP listener on port 9000
+    start_tcp_listener(listener_ctx, 9000);
 
-    /* Run the GLib main loop to keep the server alive */
+    // Start main loop
     GMainLoop *loop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(loop);
 

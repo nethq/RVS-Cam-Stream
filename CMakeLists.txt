@@ -3,9 +3,13 @@ cmake_minimum_required(VERSION 3.10)
 project(RVSCamToWeb)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 # Find needed gstreamer includes and libs
 find_package(PkgConfig REQUIRED)
+
+# Find pthreads
+find_package(Threads REQUIRED)
 
 # GStreamer libraries
 pkg_search_module(gstreamer REQUIRED gstreamer-1.0)
@@ -50,6 +54,16 @@ target_link_libraries(rvs-signal-callbacks
     ${glib2_LIBRARIES}
 )
 
+# TCP LISTENER
+# Add the library that contains the callback functions.
+add_library(rvs-tcp-listener SHARED
+    src/RvsTcpListener.c)
+
+target_link_libraries(rvs-tcp-listener
+    ${glib2_LIBRARIES}
+    Threads::Threads
+)
+
 # TESTAPP
 # Add main testapp source
 add_executable(rvs-cam-to-web-testapp
@@ -63,6 +77,7 @@ target_link_libraries(rvs-cam-to-web-testapp
     ${glib2_LIBRARIES}
     rvs-signal-emitter
     rvs-signal-callbacks
+    rvs-tcp-listener
 )
 
 # Install compiled objects to the specified directory
@@ -70,5 +85,6 @@ install(TARGETS
     rvs-cam-to-web-testapp
     rvs-signal-emitter
     rvs-signal-callbacks
+    rvs-tcp-listener
     DESTINATION ${CMAKE_SOURCE_DIR}/out
 )
