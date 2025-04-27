@@ -1,5 +1,5 @@
-#ifndef SIGNAL_EMITTER
-#define SIGNAL_EMITTER
+#ifndef RVS_SIGNAL_EMITTER
+#define RVS_SIGNAL_EMITTER
 
 #include <glib-object.h>
 
@@ -11,9 +11,4 @@ struct _CustomSignalEmitter {
     GObject parent_instance;
 };
 
-enum {
-    SIGNAL_MY_CUSTOM,
-    N_SIGNALS
-};
-
-#endif /* SIGNAL_EMITTER */
+#endif /* RVS_SIGNAL_EMITTER */

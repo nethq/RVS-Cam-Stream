@@ -1,12 +1,14 @@
 #include "RvsSignalEmitter.h"
+#include "RvsSignalsCustom.h"
 
 G_DEFINE_TYPE(CustomSignalEmitter, custom_signal_emitter, G_TYPE_OBJECT)
 
-static guint custom_signals[N_SIGNALS] = { 0 };
+static guint custom_signals[SignalCount] = { 0 };
 
 void custom_signal_emitter_class_init(CustomSignalEmitterClass *klass) {
-    custom_signals[SIGNAL_MY_CUSTOM] = g_signal_new(
-        "my-custom-signal",
+    const gchar* signal_name = signalName[SetBrightness];
+    custom_signals[SetBrightness] = g_signal_new(
+        signal_name,
         G_TYPE_FROM_CLASS(klass),
         G_SIGNAL_RUN_FIRST,
         0,

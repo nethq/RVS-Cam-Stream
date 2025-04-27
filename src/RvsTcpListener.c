@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 
 #include "RvsTcpListener.h"
+#include "RvsSignalsCustom.h"
 
 static void *tcp_server_thread(void *arg) {
     TcpListenerContext *ctx = (TcpListenerContext *)arg;
@@ -36,7 +37,7 @@ static void *tcp_server_thread(void *arg) {
             *(ctx->command_buffer) = pattern;
 
             // Emit signal
-            g_signal_emit_by_name(ctx->emitter, "my-custom-signal", ctx);
+            g_signal_emit_by_name(ctx->emitter, signalName[SetBrightness], ctx);
         }
         close(client_fd);
     }
@@ -49,3 +50,4 @@ void start_tcp_listener(TcpListenerContext *ctx, int port) {
     pthread_create(&thread, NULL, tcp_server_thread, ctx);
     pthread_detach(thread);
 }
+

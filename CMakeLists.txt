@@ -33,6 +33,12 @@ link_directories(
     ${glib2_LIBRARY_DIRS}
 )
 
+# CUSTOM SIGNALS
+# Add the library that contains the custom signals names.
+add_library(rvs-custom-signals STATIC
+    src/RvsSignalsCustom.c
+)
+
 # SIGNAL EMITTER
 # Add the library that enables emission of custom signals
 add_library(rvs-signal-emitter SHARED
@@ -41,6 +47,7 @@ add_library(rvs-signal-emitter SHARED
 target_link_libraries(rvs-signal-emitter
     ${gstreamer_LIBRARIES}
     ${glib2_LIBRARIES}
+    rvs-custom-signals
 )
 
 # SIGNAL CALLBACKS
@@ -57,11 +64,13 @@ target_link_libraries(rvs-signal-callbacks
 # TCP LISTENER
 # Add the library that contains the callback functions.
 add_library(rvs-tcp-listener SHARED
-    src/RvsTcpListener.c)
+    src/RvsTcpListener.c
+)
 
 target_link_libraries(rvs-tcp-listener
     ${glib2_LIBRARIES}
     Threads::Threads
+    rvs-custom-signals
 )
 
 # TESTAPP
@@ -78,6 +87,7 @@ target_link_libraries(rvs-cam-to-web-testapp
     rvs-signal-emitter
     rvs-signal-callbacks
     rvs-tcp-listener
+    rvs-custom-signals
 )
 
 # Install compiled objects to the specified directory

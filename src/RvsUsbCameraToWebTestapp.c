@@ -1,26 +1,18 @@
 #include <gst/gst.h>
 #include <gst/rtsp-server/rtsp-server.h>
+
 #include "RvsSignalCallbacks.h"
 #include "RvsTcpListener.h"
 #include "RvsSignalEmitter.h"
+#include "RvsSignalsCustom.h"
 
-#define GST_LINE "videotestsrc name=source ! video/x-raw,framerate=30/1,width=640,height=480 ! " \
-                 "videoconvert ! x264enc tune=zerolatency speed-preset=ultrafast bitrate=2048 ! " \
+#define GST_LINE "v4l2src device=/dev/video0 name=source ! video/x-raw,framerate=30/1,width=640,height=480 ! " \
+                 "videoconvert ! video/x-raw,format=I420 ! x264enc tune=zerolatency speed-preset=ultrafast bitrate=2048 ! " \
                  "rtph264pay name=pay0 pt=96 config-interval=1"
 
 static TcpListenerContext *listener_ctx = NULL;
 
 void media_configure(GstRTSPMediaFactory *factory, GstRTSPMedia *media, gpointer user_data) {
-    GstElement *pipeline = gst_rtsp_media_get_element(media);
-    GstElement *src = gst_bin_get_by_name(GST_BIN(pipeline), "source");
-
-    if (src) {
-        int *pattern = (int *)user_data;
-        g_print("Initial pattern set to %d\n", *pattern);
-        g_object_set(src, "pattern", *pattern, NULL);
-        gst_object_unref(src);
-    }
-
     if (listener_ctx) {
         listener_ctx->media = media;
     }
@@ -58,7 +50,8 @@ int main(int argc, char *argv[]) {
     listener_ctx->command_buffer = &command_buffer;
 
     // Connect custom signal
-    g_signal_connect(emitter, "my-custom-signal", G_CALLBACK(on_my_custom_signal), listener_ctx);
+    g_signal_connect(emitter, signalName[SetBrightness],
+            G_CALLBACK(cb_set_brightness), listener_ctx);
 
     // Connect media-configure to capture media and set initial pattern
     g_signal_connect(factory, "media-configure", G_CALLBACK(media_configure), &command_buffer);
@@ -80,3 +73,4 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function rvs-config-and-build-testapp-arm64() {
+function rvs-config-and-build-testapp-amd64() {
 
     # Sanity
     [ -z "${RVS_ROOT_DIR}" ]                                                && {
@@ -30,7 +30,7 @@ function rvs-config-and-build-testapp-arm64() {
 
 echo -e "####################################################################`
         `############"
-echo "rvs-config-and-build-testapp-arm64()"
+echo "rvs-config-and-build-testapp-amd64()"
 echo "    Used to build the usb-cam-to-web testapp for target x84_64."
 echo -e "####################################################################`
         `############"

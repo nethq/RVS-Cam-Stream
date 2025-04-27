@@ -5,7 +5,6 @@
 
 #include "RvsSignalEmitter.h"
 
-void on_my_custom_signal(CustomSignalEmitter *emitter, gpointer user_data);
-void media_configure (GstRTSPMediaFactory* factory, GstRTSPMedia* media, gpointer userdata);
+void cb_set_brightness(CustomSignalEmitter *emitter, gpointer user_data);
 
 #endif /* SIGNAL_CALLBACKS */
