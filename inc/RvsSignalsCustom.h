@@ -2,12 +2,12 @@
 #define RVS_SIGNALS_CUSTOM
 
 typedef enum {
-	Invalid = -1,
+    Invalid = -1,
     SetBrightness,
     SignalCount,
-	SignalMax = 0x7fffffff 
+    SignalMax = 0x7fffffff
 } RvsSignalCustom;
 
-extern const char* signalName[SignalCount];	
+extern const char* signalName[SignalCount];
 
 #endif /* RVS_SIGNALS_CUSTOM */

@@ -6,9 +6,15 @@
 #include "RvsSignalEmitter.h"
 #include "RvsSignalsCustom.h"
 
-#define GST_LINE "v4l2src device=/dev/video0 name=source ! video/x-raw,framerate=30/1,width=640,height=480 ! " \
-                 "videoconvert ! video/x-raw,format=I420 ! x264enc tune=zerolatency speed-preset=ultrafast bitrate=2048 ! " \
+// #define GST_LINE "v4l2src device=/dev/video2 name=source ! video/x-raw,framerate=30/1,width=640,height=480 ! " \
+//                  "videoconvert ! v4l2h264enc ! " \
+//                  "rtph264pay name=pay0 pt=96 config-interval=1"
+
+#define GST_LINE "v4l2src device=/dev/video2 name=source ! queue ! video/x-raw,format=YUY2,framerate=30/1,width=640,height=480 ! " \
+                 "videoconvert ! queue ! video/x-raw,format=NV12 ! " \
+                 "v4l2h264enc ! queue ! " \
                  "rtph264pay name=pay0 pt=96 config-interval=1"
+
 
 static TcpListenerContext *listener_ctx = NULL;
 
@@ -62,7 +68,7 @@ int main(int argc, char *argv[]) {
 
     // Attach server
     gst_rtsp_server_attach(server, NULL);
-    g_print("RTSP server is live at rtsp://%s:%s/cam\n", ip, port);
+    g_print("/dev/video2 RTSP server is live at rtsp://%s:%s/cam\n", ip, port);
 
     // Start TCP listener on port 9000
     start_tcp_listener(listener_ctx, 9000);
@@ -73,4 +79,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
