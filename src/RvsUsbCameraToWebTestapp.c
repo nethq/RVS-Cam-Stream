@@ -1,9 +1,16 @@
+#include <stdio.h>
 #include <gst/gst.h>
 
 #include "RvsSignalCallbacks.h"
 #include "RvsTcpListener.h"
 #include "RvsSignalEmitter.h"
 #include "RvsSignalsCustom.h"
+
+#define GST_LINE_TEMPLATE "v4l2src device=%s \
+        name=source !  video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 !  \
+        videoconvert !  video/x-raw,format=NV12 !  v4l2h264enc !  h264parse config-interval=1 !  \
+        mpegtsmux !  udpsink host=169.254.0.101 port=5000"
+
 
 int main(int argc, char *argv[]) {
     gst_init(&argc, &argv);
@@ -16,41 +23,14 @@ int main(int argc, char *argv[]) {
     const char *dest_ip = argv[1];
     const char *video_device = argv[2];
 
-    // Create pipeline
-    GstElement *pipeline = gst_pipeline_new("rvs-pipeline");
+    char pipeline_description[1024];
+    snprintf(pipeline_description, sizeof(pipeline_description), GST_LINE_TEMPLATE, video_device);
 
-    GstElement *source = gst_element_factory_make("v4l2src", "source");
-    GstElement *convert = gst_element_factory_make("videoconvert", "convert");
-    GstElement *capsfilter = gst_element_factory_make("capsfilter", "caps");
-    GstElement *encoder = gst_element_factory_make("v4l2h264enc", "encoder");
-    GstElement *parser = gst_element_factory_make("h264parse", "parser");
-    GstElement *rtppay = gst_element_factory_make("rtph264pay", "payloader");
-    GstElement *udpsink = gst_element_factory_make("udpsink", "sink");
+    GstElement *pipeline = gst_parse_launch(pipeline_description, NULL);
 
-    if (!pipeline || !source || !convert || !capsfilter || !encoder || !parser || !rtppay || !udpsink) {
-        g_printerr("Failed to create one or more GStreamer elements.\n");
-        return -1;
-    }
+    // Get v4l2src instance of the pipeline, in order to change its properties in the callback (currently brightness)
+    GstElement *source = gst_bin_get_by_name((GstBin*) pipeline, "source");
 
-    g_object_set(source, "device", video_device, NULL);
-    g_object_set(udpsink, "host", dest_ip, "port", 5000, NULL);
-    g_object_set(rtppay, "pt", 96, NULL);
-
-    // Configure caps
-    GstCaps *caps = gst_caps_new_simple("video/x-raw",
-                                        "width", G_TYPE_INT, 640,
-                                        "height", G_TYPE_INT, 480,
-                                        "framerate", GST_TYPE_FRACTION, 30, 1,
-                                        NULL);
-    g_object_set(capsfilter, "caps", caps, NULL);
-    gst_caps_unref(caps);
-
-    // Assemble pipeline
-    gst_bin_add_many(GST_BIN(pipeline), source, convert, capsfilter, encoder, parser, rtppay, udpsink, NULL);
-    if (!gst_element_link_many(source, convert, capsfilter, encoder, parser, rtppay, udpsink, NULL)) {
-        g_printerr("Failed to link elements in pipeline.\n");
-        return -1;
-    }
 
     // Custom signal emitter
     CustomSignalEmitter *emitter = g_object_new(TYPE_CUSTOM_SIGNAL_EMITTER, NULL);
