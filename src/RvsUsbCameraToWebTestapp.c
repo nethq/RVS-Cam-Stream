@@ -22,7 +22,7 @@
 #define GST_LINE "v4l2src device=%s name=source ! "                                                \
                  "video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! "                  \
                  "videoconvert ! video/x-raw,format=NV12 ! "                                       \
-                 "x264enc ! h264parse config-interval=1 ! "                                    \
+                 "x264enc ! h264parse config-interval=1 ! "                                        \
                  "mpegtsmux ! udpsink host=%s port=%d"
 
 #endif // TARGET_QCS6490_USE_HW_264_ENC

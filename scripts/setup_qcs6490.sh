@@ -25,6 +25,7 @@ function rvs-config-testapp-qcs6490() {
                 -DCMAKE_SYSROOT=${RVS_SYSROOTS_DIR}                            \
                 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON                               \
                 -DCMAKE_BUILD_TYPE=Debug                                       \
+                -DTARGET_QCS6490_USE_HW_264_ENC=TRUE                           \
                 "${RVS_ROOT_DIR}"
     )
 }
