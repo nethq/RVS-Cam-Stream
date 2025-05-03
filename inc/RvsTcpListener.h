@@ -2,13 +2,15 @@
 #define RVS_TCP_LISTENER_H
 
 #include <gst/gst.h>
+#include <stdint.h>
 
 #include "RvsSignalEmitter.h"
 
 typedef struct {
-    CustomSignalEmitter *emitter;
     int *command_buffer;
-    GstElement *source;  // Direct reference to source
+    uint16_t tcp_command_port;
+    CustomSignalEmitter *emitter;
+    GstElement *pipeline;
 } TcpListenerContext;
 
 
