@@ -72,6 +72,14 @@ add_executable(rvs-cam-to-web-testapp
     src/RvsUsbCameraToWebTestapp.c
 )
 
+# DEFINE VARIABLE FOR CROSS-COMPILATION IN TEST APP
+# This forces the test app to use v4l2h264enc
+# This is only used for device cross-compiling, since this is the only available h264 encoder
+# which is not normally present in linux-amd64 (avaliable x264enc)
+if(${TARGET_QCS6490_USE_HW_264_ENC})
+    target_compile_definitions(rvs-cam-to-web-testapp PRIVATE TARGET_QCS6490_USE_HW_264_ENC)
+endif()
+
 target_link_libraries(rvs-cam-to-web-testapp
     ${gstreamer_LIBRARIES}
     ${gstreamer-video_LIBRARIES}

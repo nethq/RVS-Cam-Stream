@@ -9,11 +9,23 @@
 #include "RvsSignalEmitter.h"
 #include "RvsSignalsCustom.h"
 
+#ifdef TARGET_QCS6490_USE_HW_264_ENC
+
 #define GST_LINE "v4l2src device=%s name=source ! "                                                \
                  "video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! "                  \
                  "videoconvert ! video/x-raw,format=NV12 ! "                                       \
                  "v4l2h264enc ! h264parse config-interval=1 ! "                                    \
                  "mpegtsmux ! udpsink host=%s port=%d"
+
+#else
+
+#define GST_LINE "v4l2src device=%s name=source ! "                                                \
+                 "video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! "                  \
+                 "videoconvert ! video/x-raw,format=NV12 ! "                                       \
+                 "x264enc ! h264parse config-interval=1 ! "                                    \
+                 "mpegtsmux ! udpsink host=%s port=%d"
+
+#endif // TARGET_QCS6490_USE_HW_264_ENC
 
 void print_help(const char *prog) {
     g_print("\nUsage: %s -d <video_device> -i <destination_ip> -u <udp_port> -t <tcp_port>\n",
@@ -104,7 +116,7 @@ int main(int argc, char *argv[]) {
     ctx->tcp_command_port = tcp_port;
 
     g_signal_connect(emitter, signalName[SetBrightness], G_CALLBACK(cb_set_brightness), ctx);
-    start_tcp_listener(ctx, tcp_port);
+    start_tcp_listener(ctx);
 
     ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
     if (ret == GST_STATE_CHANGE_FAILURE) {

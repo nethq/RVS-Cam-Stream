@@ -39,7 +39,7 @@ static void *tcp_listener_thread(void *arg) {
     return NULL;
 }
 
-void start_tcp_listener(TcpListenerContext *ctx, int port) {
+void start_tcp_listener(TcpListenerContext *ctx) {
     pthread_t thread;
     pthread_create(&thread, NULL, tcp_listener_thread, ctx);
     pthread_detach(thread);
