@@ -28,10 +28,15 @@ static void *tcp_listener_thread(void *arg) {
         if (client_fd < 0) continue;
 
         char buffer[16] = {0};
+        char* buffer_ptr = 0;
         ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer)-1);
         if (bytes_read > 0) {
             buffer[bytes_read] = '\0';
-            *(ctx->command_buffer) = atoi(buffer);
+            buffer_ptr = strtok(buffer, ":");
+            // TODO: Insert switch case for callbacks
+            buffer_ptr = strtok(NULL, ":");
+            *(ctx->command_buffer) = atoi(buffer_ptr);
+            // TODO: Change signalName array to not be statically fixed
             g_signal_emit_by_name(ctx->emitter, signalName[SetBrightness], ctx);
         }
         close(client_fd);
