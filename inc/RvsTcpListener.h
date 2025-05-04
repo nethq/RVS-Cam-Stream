@@ -15,5 +15,6 @@ typedef struct {
 
 
 void start_tcp_listener(TcpListenerContext *ctx);
+void set_property(TcpListenerContext *ctx, char* buffer_ptr);
 
 #endif /* RVS_TCP_LISTENER_H */

@@ -4,6 +4,9 @@
 typedef enum {
     Invalid = -1,
     SetBrightness,
+    SetSaturation,
+    SetContrast,
+    SetState,
     SignalCount,
     SignalMax = 0x7fffffff
 } RvsSignalCustom;

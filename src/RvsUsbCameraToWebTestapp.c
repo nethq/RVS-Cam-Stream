@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
     uint16_t udp_port = 0;
     uint16_t tcp_port = 0;
     GstElement *pipeline;
-    static int command_buffer[16] = {0};
+    static int command_buffer[32] = {0};
     CustomSignalEmitter *emitter = NULL;
     TcpListenerContext *ctx = NULL;
     GstStateChangeReturn ret = GST_STATE_CHANGE_FAILURE;
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 
     // Support for --help as well
     for (int i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "--help") == 0) {
+        if (0 == strcmp(argv[i], "--help")) {
             print_help(argv[0]);
             return 0;
         }
@@ -116,6 +116,9 @@ int main(int argc, char *argv[]) {
     ctx->tcp_command_port = tcp_port;
 
     g_signal_connect(emitter, signalName[SetBrightness], G_CALLBACK(cb_set_brightness), ctx);
+    g_signal_connect(emitter, signalName[SetSaturation], G_CALLBACK(cb_set_saturation), ctx);
+    g_signal_connect(emitter, signalName[SetContrast], G_CALLBACK(cb_set_contrast), ctx);
+    g_signal_connect(emitter, signalName[SetState], G_CALLBACK(cb_set_pipeline_state), ctx);
     start_tcp_listener(ctx);
 
     ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
@@ -135,7 +138,9 @@ int main(int argc, char *argv[]) {
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
     g_main_loop_unref(loop);
-    g_free(ctx);
+    if (NULL != ctx ) {
+        g_free(ctx);
+    }
 
     return 0;
 }
