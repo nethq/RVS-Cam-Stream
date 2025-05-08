@@ -1,0 +1,20 @@
+[
+    {
+        "lbl": "Brightness",
+        "cmd": "b",
+        "min": 0,
+        "max": 100
+    },
+    {
+        "lbl": "Contrast",
+        "cmd": "c",
+        "min": 0,
+        "max": 100
+    },
+    {
+        "lbl": "Saturation",
+        "cmd": "s",
+        "min": 0,
+        "max": 100
+    }
+]
