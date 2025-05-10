@@ -1,0 +1,51 @@
+<% if(!cams.length){ %>
+   <p>No live cams yet</p>
+   <% } %>
+      <div class="row g-4">
+         <% cams.forEach(c=>{ %>
+            <div class="col-md-6">
+               <div class="card text-bg-dark">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                     <span>
+                        <%= c.name %> (udp <%= c.udp %>)
+                     </span>
+                     <div>
+                        <a class="btn btn-sm btn-info me-2" target="_blank"
+                           href="http://<%= host %>:8888/<%= c.name %>/index.m3u8">open</a>
+                        <form class="d-inline" method="POST" action="/cmd">
+                           <input type="hidden" name="name" value="<%= c.name %>">
+                           <input type="hidden" name="halt" value="1">
+                           <button class="btn btn-sm btn-danger">Stop</button>
+                        </form>
+                     </div>
+                  </div>
+                  <div class="card-body p-2">
+                     <video id="v_<%= c.name %>" class="w-100 bg-secondary" autoplay muted playsinline></video>
+                     <form class="d-flex gap-1 flex-wrap mt-2" method="POST" action="/cmd">
+                        <input type="hidden" name="name" value="<%= c.name %>">
+                        <% controls.forEach(o=>{ %>
+                           <label class="small text-light">
+                              <%= o.lbl %>
+                                 <input type="range" name="<%= o.cmd %>" min="<%= o.min %>" max="<%= o.max %>"
+                                    class="form-range">
+                           </label>
+                           <% }) %>
+                              <button class="btn btn-sm btn-primary">send</button>
+                     </form>
+                  </div>
+               </div>
+            </div>
+            <% }) %>
+      </div>
+      <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.9/dist/hls.min.js"></script>
+      <script>
+         const HOST = "<%= host %>";
+<% cams.forEach(c => { %>
+            (function () {
+               const v = document.getElementById('v_<%= c.name %>');
+               const src = `http://${HOST}:8888/<%= c.name %>/index.m3u8`;
+               if (v.canPlayType('application/vnd.apple.mpegurl')) { v.src = src; v.play(); }
+               else if (Hls.isSupported()) { const h = new Hls(); h.loadSource(src); h.attachMedia(v); h.on(Hls.Events.MANIFEST_PARSED, () => v.play()); }
+            })();
+<% }) %>
+      </script>

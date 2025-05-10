@@ -1,0 +1,8 @@
+api: yes
+rtmp: yes
+rtmpAddress: ":1935"
+hls: yes
+hlsAddress: ":8888"
+hlsAllowOrigin: '*'
+hlsAlwaysRemux: yes
+paths: { all: { source: publisher } }
