@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# rvs_stream.sh — sourceable modular RVS stream controller
 
 rvs-register-device() {
   echo "[${RVS_IDENTITY_NAME}] Attempting registration with ${RVS_SERVER_IP}"

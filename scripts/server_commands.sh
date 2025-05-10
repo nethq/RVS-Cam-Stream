@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 function rvs-make-db() {
 sqlite3 ${RVS_ROOT_DIR}/server/store.db <<-'EOF'
 PRAGMA journal_mode = DELETE;
@@ -11,7 +13,7 @@ ip    TEXT
 EOF
 }
 
-function annihilate-server() {
+function rvs-annihilate-server() {
     cd ${RVS_ROOT_DIR}/server/                                             && \
         docker compose down --rmi all                             
 }
