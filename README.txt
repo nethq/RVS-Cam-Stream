@@ -1,6 +1,3 @@
-````markdown
-# Sample README
-
 **Hint**: source `setenv.sh`
 
 ## 1. Valid Stream Acquisition
@@ -134,5 +131,3 @@ Then restart the web service:
 docker-compose restart web
 ```
 
-```
-```
