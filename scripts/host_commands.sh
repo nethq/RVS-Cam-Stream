@@ -15,14 +15,23 @@ rvs-register-device() {
   echo "[${RVS_IDENTITY_NAME}] udp ${RVS_UDP_PORT} allocated"
 }
 
+# Used to set a custom ip to the device, in order to sucessfully send tcp commands from server
+rvs-setup-device-ip() {
+    local RVS_DEVICE_NW_IFACE="eth1"
+    adb shell "ip addr add ${RVS_DEVICE_IP}/16 dev ${RVS_DEVICE_NW_IFACE}"                  && \
+        adb shell "ip link set ${RVS_DEVICE_NW_IFACE} up"
+}
+
 rvs-start-stream() {
   if [[ -z "${RVS_UDP_PORT}" || "${RVS_UDP_PORT}" -eq 0 ]]; then
     echo "[ERR] UDP port not set. Run rvs-register-device first."
     return 1
   fi
 
+  rvs-setup-device-ip
+
   echo "[${RVS_IDENTITY_NAME}] Starting stream using ${RVS_BINARY}"
-  "${RVS_BINARY}" -d "${RVS_CAM_DEVICE}" -i "${RVS_SERVER_IP}" -u "${RVS_UDP_PORT}" -t "${RVS_CONTROL_PORT_1}" &
+  adb shell "${RVS_BINARY}" -d "${RVS_CAM_DEVICE}" -i "${RVS_SERVER_IP}" -u "${RVS_UDP_PORT}" -t "${RVS_CONTROL_PORT_1}" &
   export RVS_STREAM_PID=$!
 }
 
