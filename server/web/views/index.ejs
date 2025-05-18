@@ -1,51 +1,84 @@
-<% if(!cams.length){ %>
-   <p>No live cams yet</p>
-   <% } %>
-      <div class="row g-4">
-         <% cams.forEach(c=>{ %>
-            <div class="col-md-6">
-               <div class="card text-bg-dark">
-                  <div class="card-header d-flex justify-content-between align-items-center">
-                     <span>
-                        <%= c.name %> (udp <%= c.udp %>)
-                     </span>
+<!-- File: web/views/index.ejs -->
+<div class="row g-4">
+   <% if (!cams.length) { %>
+      <div class="col-12">
+         <div class="text-center fs-5 mt-5">No cameras available</div>
+      </div>
+      <% } %>
+         <% cams.forEach(c=> { %>
+            <div class="col-12 col-sm-6 col-lg-4">
+               <div class="card d-flex flex-column h-100 p-3">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
                      <div>
-                        <a class="btn btn-sm btn-info me-2" target="_blank"
-                           href="http://<%= host %>:8888/<%= c.name %>/index.m3u8">open</a>
-                        <form class="d-inline" method="POST" action="/cmd">
+                        <h5 class="mb-0 text-white">
+                           <%= c.name %>
+                        </h5>
+                        <small class="badge bg-secondary">UDP <%= c.udp %></small>
+                     </div>
+                     <div class="btn-group">
+                        <a href="http://<%= host %>:8888/<%= c.name %>/index.m3u8" target="_blank"
+                           class="btn btn-sm btn-accent">Live</a>
+                        <button type="button" class="btn btn-sm btn-outline-light copy-url"
+                           data-url="rtmp://<%= host %>:1935/<%= c.name %>">Copy RTMP</button>
+                        <button type="button" class="btn btn-sm btn-outline-light copy-url"
+                           data-url="http://<%= host %>:8888/<%= c.name %>/index.m3u8">Copy HLS</button>
+                        <form method="POST" action="/cmd" class="d-inline">
                            <input type="hidden" name="name" value="<%= c.name %>">
                            <input type="hidden" name="halt" value="1">
                            <button class="btn btn-sm btn-danger">Stop</button>
                         </form>
                      </div>
                   </div>
-                  <div class="card-body p-2">
-                     <video id="v_<%= c.name %>" class="w-100 bg-secondary" autoplay muted playsinline></video>
-                     <form class="d-flex gap-1 flex-wrap mt-2" method="POST" action="/cmd">
-                        <input type="hidden" name="name" value="<%= c.name %>">
-                        <% controls.forEach(o=>{ %>
-                           <label class="small text-light">
-                              <%= o.lbl %>
-                                 <input type="range" name="<%= o.cmd %>" min="<%= o.min %>" max="<%= o.max %>"
-                                    class="form-range">
-                           </label>
-                           <% }) %>
-                              <button class="btn btn-sm btn-primary">send</button>
-                     </form>
+                  <video id="v_<%= c.name %>" class="w-100 rounded mb-3" autoplay muted playsinline
+                     style="aspect-ratio:16/9"></video>
+                  <div class="flex-grow-1 d-flex flex-column gap-3">
+                     <% controls.forEach(o=> { %>
+                        <form method="POST" action="/cmd" class="d-flex align-items-center">
+                           <input type="hidden" name="name" value="<%= c.name %>">
+                           <div class="flex-grow-1">
+                              <label class="form-label text-white small mb-1">
+                                 <%= o.lbl %>
+                              </label>
+                              <input type="range" name="<%= o.cmd %>" min="<%= o.min %>" max="<%= o.max %>"
+                                 class="form-range">
+                           </div>
+                           <button type="submit" class="btn btn-sm btn-accent ms-2">Send</button>
+                        </form>
+                        <% }) %>
+                           <form method="POST" action="/cmd" class="d-flex gap-2">
+                              <input type="hidden" name="name" value="<%= c.name %>">
+                              <div class="flex-grow-1">
+                                 <label class="form-label text-white small mb-1">Custom Command</label>
+                                 <input type="text" name="custom"
+                                    class="form-control form-control-sm bg-light text-dark" placeholder="Raw command">
+                              </div>
+                              <button type="submit" class="btn btn-sm btn-accent">Send</button>
+                           </form>
                   </div>
                </div>
             </div>
             <% }) %>
-      </div>
-      <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.9/dist/hls.min.js"></script>
-      <script>
-         const HOST = "<%= host %>";
-<% cams.forEach(c => { %>
-            (function () {
-               const v = document.getElementById('v_<%= c.name %>');
-               const src = `http://${HOST}:8888/<%= c.name %>/index.m3u8`;
-               if (v.canPlayType('application/vnd.apple.mpegurl')) { v.src = src; v.play(); }
-               else if (Hls.isSupported()) { const h = new Hls(); h.loadSource(src); h.attachMedia(v); h.on(Hls.Events.MANIFEST_PARSED, () => v.play()); }
-            })();
-<% }) %>
-      </script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.9/dist/hls.min.js"></script>
+<script>
+   const HOST = "<%= host %>";
+   document.querySelectorAll('video').forEach(v => {
+      const name = v.id.slice(2);
+      const src = `http://${HOST}:8888/${name}/index.m3u8`;
+      if (v.canPlayType('application/vnd.apple.mpegurl')) {
+         v.src = src; v.play();
+      } else if (Hls.isSupported()) {
+         const h = new Hls(); h.loadSource(src); h.attachMedia(v); h.on(Hls.Events.MANIFEST_PARSED, () => v.play());
+      }
+   });
+   document.querySelectorAll('.copy-url').forEach(btn => {
+      btn.addEventListener('click', () => {
+         const url = btn.getAttribute('data-url');
+         navigator.clipboard.writeText(url).then(() => {
+            const original = btn.textContent;
+            btn.textContent = 'Copied';
+            setTimeout(() => btn.textContent = original, 1000);
+         });
+      });
+   });
+</script>

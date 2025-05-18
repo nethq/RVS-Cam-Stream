@@ -22,7 +22,7 @@ rvs-setup-device-ip() {
         adb shell "ip link set ${RVS_DEVICE_NW_IFACE} up"
 }
 
-rvs-start-stream() {
+rvs-embedded-start-stream() {
   if [[ -z "${RVS_UDP_PORT}" || "${RVS_UDP_PORT}" -eq 0 ]]; then
     echo "[ERR] UDP port not set. Run rvs-register-device first."
     return 1
@@ -35,9 +35,28 @@ rvs-start-stream() {
   export RVS_STREAM_PID=$!
 }
 
-rvs-start-all() {
+rvs-local-start-stream(){
+  if [[ -z "${RVS_UDP_PORT}" || "${RVS_UDP_PORT}" -eq 0 ]]; then
+    echo "[ERR] UDP port not set. Run rvs-register-device first."
+    return 1
+  fi
+
+  echo "[${RVS_IDENTITY_NAME}] Starting stream using ${RVS_BINARY}"
+  echo "hello ${RVS_BINARY}" -d "${RVS_CAM_DEVICE}" -i "${RVS_SERVER_IP}" -u "${RVS_UDP_PORT}" -t "${RVS_CONTROL_PORT_1}"
+  "${RVS_BINARY}" -d "${RVS_CAM_DEVICE}" -i "${RVS_SERVER_IP}" -u "${RVS_UDP_PORT}" -t "${RVS_CONTROL_PORT_1}" &
+  export RVS_STREAM_PID=$!
+}
+
+rvs-embedded-start-all() {
+  echo "Starting registration and streaming pipeline adb device, and its camera"
   trap rvs-cleanup INT TERM
-  rvs-register-device && rvs-start-stream
+  rvs-register-device && rvs-embedded-start-stream
+}
+
+rvs-local-start-all() {
+  echo "Starting registration and streaming pipeline on this device, and this device's camera"
+  trap rvs-cleanup INT TERM
+  rvs-register-device && rvs-local-start-stream
 }
 
 rvs-cleanup() {
@@ -55,8 +74,13 @@ echo -e "    rvs-register-device() \n`
     `       with the params given. Requests server to provision udp port \n`
     `       authenticated through RVS_SERVER_TOKEN - ${RVS_SERVER_TOKEN} \n"
 
-echo -e "    rvs-start-stream() \n`
-    `       Starts c app ${RVS_BINARY} \n`
+echo -e "    rvs-embedded-start-stream() \n`
+    `       Starts c app ${RVS_BINARY} on embedded device \n`
+    `       to ${RVS_SERVER_IP}:<udp port>, where udp port is acquired through \n`
+    `       rvs-register-device() \n"
+
+echo -e "    rvs-local-start-stream() \n`
+    `       Starts c app ${RVS_BINARY} on local device \n`
     `       to ${RVS_SERVER_IP}:<udp port>, where udp port is acquired through \n`
     `       rvs-register-device() \n"
 
@@ -64,9 +88,15 @@ echo -e "    rvs-listen-control()\n`
     `       Starts pythonic listener \n`
     `       for halt=1 on ${RVS_CONTROL_PORT_1} \n"
 
-echo -e "    rvs-start-all() - \n`
-    `       Makes shit happen, maybe runs,\n`
-    `       depending on moon phase 🌑🌒🌓🌔🌕🌖🌗🌘"
+echo -e "    rvs-embedded-start-all() - \n`
+    `       Registers with this device's connection, - \n`
+    `       starts stream on embedded device through adb \n`
+    `       🌑🌒🌓🌔🌕🌖🌗🌘"
+
+echo -e "    rvs-local-start-all() - \n`
+    `       Executes all commands in correct order locally - \n`
+    `       registers on remote server, starts stream \n`
+    `       🌑🌒🌓🌔🌕🌖🌗🌘"
 
 echo "    rvs-cleanup() - Cleans up after your mess, be ashamed."
 

@@ -2,19 +2,49 @@
     {
         "lbl": "Brightness",
         "cmd": "b",
-        "min": 0,
-        "max": 100
+        "min": -10,
+        "max": 10
     },
     {
         "lbl": "Contrast",
         "cmd": "c",
         "min": 0,
-        "max": 100
+        "max": 20
     },
     {
         "lbl": "Saturation",
         "cmd": "s",
         "min": 0,
-        "max": 100
+        "max": 10
+    },
+    {
+        "lbl": "White Balance Automatic",
+        "cmd": "wba",
+        "min": 0,
+        "max": 1
+    },
+    {
+        "lbl": "Gamma",
+        "cmd": "g",
+        "min": 100,
+        "max": 200
+    },
+    {
+        "lbl": "Gain",
+        "cmd": "gain",
+        "min": 32,
+        "max": 48
+    },
+    {
+        "lbl": "Power Line Frequency",
+        "cmd": "plf",
+        "min": 0,
+        "max": 2
+    },
+    {
+        "lbl": "State",
+        "cmd": "p",
+        "min": 0,
+        "max": 1
     }
 ]

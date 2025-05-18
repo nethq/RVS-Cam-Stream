@@ -17,7 +17,7 @@ static void *tcp_listener_thread(void *arg) {
     struct sockaddr_in addr = {
         .sin_family = AF_INET,
         .sin_addr.s_addr = INADDR_ANY,
-        .sin_port = htons(9000)
+        .sin_port = htons(9000) //needs to change with cli args
     };
 
     bind(server_fd, (struct sockaddr*)&addr, sizeof(addr));
