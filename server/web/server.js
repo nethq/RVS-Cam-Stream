@@ -47,35 +47,45 @@ app.post('/register', (q, s) => {
     [name, u, ctrl1, ctrl2, ip],
     () => s.json({ udpPort: u })
   ))
+  console.log("Recieved connection from device -", key, name, ctrl1, ctrl2, ip);
 })
 
 app.post('/cmd', ensureAuth, (q, s) => {
-  const { name, halt, custom } = q.body
+  const { name, halt, custom, ip } = q.body
+
   DB.get('SELECT ctrl1,ctrl2,ip FROM cams WHERE name=?', [name], (_, row) => {
     if (!row) return s.redirect('/')
     const ports = [row.ctrl1, row.ctrl2]
+    // if client provided an ip override, use it; otherwise use stored IP
+    const targetIp = ip || row.ip
+
     if (custom) {
       ports.forEach(p => {
         const sock = new net.Socket()
-        sock.connect(Number(p), row.ip, () => { sock.write(custom); sock.end() }).on('error', () => { })
+        sock.connect(Number(p), targetIp, () => { sock.write(custom); sock.end() })
+          .on('error', () => { })
       })
       return s.redirect('/')
     }
+
     if (halt) {
       ports.forEach(p => {
         const sock = new net.Socket()
-        sock.connect(Number(p), row.ip, () => { sock.write('halt=1'); sock.end() }).on('error', () => { })
+        sock.connect(Number(p), targetIp, () => { sock.write('halt=1'); sock.end() })
+          .on('error', () => { })
       })
     } else {
       Object.entries(q.body)
-        .filter(([k]) => !['name', 'halt', 'custom'].includes(k))
+        .filter(([k]) => !['name', 'halt', 'custom', 'ip'].includes(k))
         .forEach(([k, v]) => {
           ports.forEach(p => {
             const sock = new net.Socket()
-            sock.connect(Number(p), row.ip, () => { sock.write(`${k}:${v}`); sock.end() }).on('error', () => { })
+            sock.connect(Number(p), targetIp, () => { sock.write(`${k}:${v}`); sock.end() })
+              .on('error', () => { })
           })
         })
     }
+
     s.redirect('/')
   })
 })

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-rvs-register-device() {
+rvs-local-register-device() {
   echo "[${RVS_IDENTITY_NAME}] Attempting registration with ${RVS_SERVER_IP}"
 
   until resp=$(curl -sf -X POST "http://${RVS_SERVER_IP}:4000/register" \
@@ -14,6 +14,63 @@ rvs-register-device() {
   export RVS_UDP_PORT=$(printf '%s' "${resp}" | grep -Po '"udpPort":\K\d+')
   echo "[${RVS_IDENTITY_NAME}] udp ${RVS_UDP_PORT} allocated"
 }
+
+rvs-embedded-register-device() {
+  local resp
+
+  echo "[${RVS_IDENTITY_NAME}] (embedded) Attempting registration with ${RVS_SERVER_IP}"
+
+  while :; do
+    # perform registration via BusyBox curl on the device
+    resp=$(adb shell "curl -sS -X POST \"http://${RVS_SERVER_IP}:4000/register\" \
+      -H 'Content-Type: application/json' \
+      -d '{\"key\":\"${RVS_SERVER_TOKEN}\",\"name\":\"${RVS_IDENTITY_NAME}\",\"ctrl1\":${RVS_CONTROL_PORT_1},\"ctrl2\":${RVS_CONTROL_PORT_2}}'" \
+      | tr -d '\r')
+
+    # only check for valid JSON syntax (presence of udpPort), not curl exit code
+    if printf '%s' "${resp}" | grep -q '"udpPort":'; then
+      break
+    fi
+    
+    echo "[${RVS_IDENTITY_NAME}] (embedded) invalid response, retrying in 5s…"
+    sleep 5
+  done
+
+  # extract and export the UDP port
+  RVS_UDP_PORT=$(printf '%s' "${resp}" | grep -Po '"udpPort":\K[0-9]+')
+  export RVS_UDP_PORT
+  echo "[${RVS_IDENTITY_NAME}] (embedded) UDP port ${RVS_UDP_PORT} allocated"
+}
+
+
+
+# rvs-embedded-register-device() {
+#   echo "Through adb shell starting - [${RVS_IDENTITY_NAME}] Attempting registration with ${RVS_SERVER_IP}"
+
+#   local RVS_CURL_RESPONSE=$(adb shell \"curl -sS -X POST "http://${RVS_SERVER_IP}:4000/register" \
+#     -H \"Content-Type: application/json\" \
+#     -d \"{"key\":\"${RVS_SERVER_TOKEN}\",\"name\":\"${RVS_IDENTITY_NAME}\",\"ctrl1\":${RVS_CONTROL_PORT_1},\"ctrl2\":${RVS_CONTROL_PORT_2}}\"")
+
+#   echo "${RVS_CURL_RESPONSE}"
+
+#   # adb shell "export RVS_UDP_PORT=$(printf '%s' "${resp}" | grep -Po '"udpPort":\K\d+')"
+
+# # curl -sf -X POST "http://${RVS_SERVER_IP}:4000/register" -H "Content-Type: application/json" -d "{\"key\":\"${RVS_SERVER_TOKEN}\",\"name\":\"${RVS_IDENTITY_NAME}\",\"ctrl1\":${RVS_CONTROL_PORT_1},\"ctrl2\":${RVS_CONTROL_PORT_2}}"
+# # curl -sf -X POST "http://${RVS_SERVER_IP}:4000/register" -H "Content-Type: application/json" -d "{\"key\":\"${RVS_SERVER_TOKEN}\",\"name\":\"${RVS_IDENTITY_NAME}\",\"ctrl1\":${RVS_CONTROL_PORT_1},\"ctrl2\":${RVS_CONTROL_PORT_2}}"
+# # curl -sf -X POST "http://192.168.0.175:4000/register" -H "Content-Type: application/json -d {"key":"register123","name":"cam3","ctrl1":9000,"ctrl2":6001}"
+
+# # curl for busybox
+# ##  curl -sS -X POST "http://192.168.0.175:4000/register" \
+# ##   -H "Content-Type: application/json" \
+# ##   -d '{"key":"register123","name":"cam3","ctrl1":9000,"ctrl2":6001}'
+
+# # resp=$(curl -sS -X POST "http://${RVS_SERVER_IP}:4000/register" \
+# #   -H "Content-Type: application/json" \
+# #   -d "{\"key\":\"${RVS_SERVER_TOKEN}\",\"name\":\"${RVS_IDENTITY_NAME}\",\"ctrl1\":${RVS_CONTROL_PORT_1},\"ctrl2\":${RVS_CONTROL_PORT_2}}")
+
+#   echo "[${RVS_IDENTITY_NAME}] udp ${RVS_UDP_PORT} allocated"
+# }
+
 
 # Used to set a custom ip to the device, in order to sucessfully send tcp commands from server
 rvs-setup-device-ip() {
@@ -29,7 +86,8 @@ rvs-embedded-start-stream() {
   fi
 
   rvs-setup-device-ip
-
+  echo "If a desire has befallen you, dear (ab)user, to send commands to a device, connected directly through lan port (total herecy), use the hardset ip - ${RVS_DEVICE_IP}"
+  
   echo "[${RVS_IDENTITY_NAME}] Starting stream using ${RVS_BINARY}"
   adb shell "${RVS_BINARY}" -d "${RVS_CAM_DEVICE}" -i "${RVS_SERVER_IP}" -u "${RVS_UDP_PORT}" -t "${RVS_CONTROL_PORT_1}" &
   export RVS_STREAM_PID=$!
@@ -50,13 +108,13 @@ rvs-local-start-stream(){
 rvs-embedded-start-all() {
   echo "Starting registration and streaming pipeline adb device, and its camera"
   trap rvs-cleanup INT TERM
-  rvs-register-device && rvs-embedded-start-stream
+  rvs-embedded-register-device && rvs-embedded-start-stream
 }
 
 rvs-local-start-all() {
   echo "Starting registration and streaming pipeline on this device, and this device's camera"
   trap rvs-cleanup INT TERM
-  rvs-register-device && rvs-local-start-stream
+  rvs-local-register-device && rvs-local-start-stream
 }
 
 rvs-cleanup() {

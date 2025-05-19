@@ -45,10 +45,28 @@
                            <button type="submit" class="btn btn-sm btn-accent ms-2">Send</button>
                         </form>
                         <% }) %>
+
+                           <!-- existing custom command -->
                            <form method="POST" action="/cmd" class="d-flex gap-2">
                               <input type="hidden" name="name" value="<%= c.name %>">
                               <div class="flex-grow-1">
                                  <label class="form-label text-white small mb-1">Custom Command</label>
+                                 <input type="text" name="custom"
+                                    class="form-control form-control-sm bg-light text-dark" placeholder="Raw command">
+                              </div>
+                              <button type="submit" class="btn btn-sm btn-accent">Send</button>
+                           </form>
+
+                           <!-- new external-IP override command -->
+                           <form method="POST" action="/cmd" class="d-flex gap-2">
+                              <input type="hidden" name="name" value="<%= c.name %>">
+                              <div class="flex-grow-1">
+                                 <label class="form-label text-white small mb-1">External IP</label>
+                                 <input type="text" name="ip" class="form-control form-control-sm bg-light text-dark"
+                                    placeholder="IP override">
+                              </div>
+                              <div class="flex-grow-1">
+                                 <label class="form-label text-white small mb-1">External Command</label>
                                  <input type="text" name="custom"
                                     class="form-control form-control-sm bg-light text-dark" placeholder="Raw command">
                               </div>
@@ -59,6 +77,7 @@
             </div>
             <% }) %>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.9/dist/hls.min.js"></script>
 <script>
    const HOST = "<%= host %>";
@@ -68,7 +87,8 @@
       if (v.canPlayType('application/vnd.apple.mpegurl')) {
          v.src = src; v.play();
       } else if (Hls.isSupported()) {
-         const h = new Hls(); h.loadSource(src); h.attachMedia(v); h.on(Hls.Events.MANIFEST_PARSED, () => v.play());
+         const h = new Hls(); h.loadSource(src); h.attachMedia(v);
+         h.on(Hls.Events.MANIFEST_PARSED, () => v.play());
       }
    });
    document.querySelectorAll('.copy-url').forEach(btn => {
