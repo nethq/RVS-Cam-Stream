@@ -11,13 +11,11 @@
 static void *tcp_listener_thread(void *arg) {
     TcpListenerContext *ctx = (TcpListenerContext *)arg;
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    int opt = 1;
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
 
     struct sockaddr_in addr = {
         .sin_family = AF_INET,
         .sin_addr.s_addr = INADDR_ANY,
-        .sin_port = htons(9000) //needs to change with cli args
+        .sin_port = htons(ctx->tcp_command_port)
     };
 
     bind(server_fd, (struct sockaddr*)&addr, sizeof(addr));
