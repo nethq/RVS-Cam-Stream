@@ -1,9 +1,4 @@
 services:
-  auth:
-    build: auth
-    network_mode: host
-    environment: [ JWT_SECRET=157758cf5b3b88f84fd82ab6ce481bb7883063bcd15eb35495729dc9deb2b1e7, ADMIN_PASSWORD=admin ]
-
   media:
     image: bluenviron/mediamtx:latest
     network_mode: host

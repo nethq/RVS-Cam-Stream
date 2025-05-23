@@ -1,8 +1,9 @@
-FROM node:18-alpine
+FROM python:3.12-slim
 WORKDIR /app
-COPY package.json .
-COPY views .
-RUN npm install --omit=dev
-COPY . .
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY control.json .
+COPY templates ./templates
+COPY main.py .
 EXPOSE 4000
-CMD ["node","server.js"]
+CMD ["uvicorn","main:app","--host","0.0.0.0","--port","4000"]

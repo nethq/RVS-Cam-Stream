@@ -1,0 +1,49 @@
+{% extends "layout.html" %}{% block body %}<div class="row g-4">{% if cams|length==0 %}<div class="col-12">
+        <div class="text-center fs-5 mt-5">No cameras available</div>
+    </div>{% endif %}{% for c in cams %}<div class="col-12 col-sm-6 col-lg-4">
+        <div class="card d-flex flex-column h-100 p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="mb-0 text-white">{{ c.name }}</h5><small class="badge bg-secondary">UDP {{ c.udp
+                        }}</small>
+                </div>
+                <div class="btn-group"><a href="http://{{ host }}:8888/{{ c.name }}/index.m3u8" target="_blank"
+                        class="btn btn-sm btn-accent">Live</a><button type="button"
+                        class="btn btn-sm btn-outline-light copy-url"
+                        data-url="rtmp://{{ host }}:1935/{{ c.name }}">Copy RTMP</button><button type="button"
+                        class="btn btn-sm btn-outline-light copy-url"
+                        data-url="http://{{ host }}:8888/{{ c.name }}/index.m3u8">Copy HLS</button>
+                    <form method="POST" action="/cmd" class="d-inline"><input type="hidden" name="name"
+                            value="{{ c.name }}"><input type="hidden" name="halt" value="1"><button
+                            class="btn btn-sm btn-danger">Stop</button></form>
+                </div>
+            </div><video id="v_{{ c.name }}" class="w-100 rounded mb-3" autoplay muted playsinline
+                style="aspect-ratio:16/9"></video>
+            <div class="flex-grow-1 d-flex flex-column gap-3">{% for o in controls %}<form method="POST" action="/cmd"
+                    class="d-flex align-items-center"><input type="hidden" name="name" value="{{ c.name }}">
+                    <div class="flex-grow-1"><label class="form-label text-white small mb-1">{{ o.lbl }}</label><input
+                            type="range" name="{{ o.cmd }}" min="{{ o.min }}" max="{{ o.max }}" class="form-range">
+                    </div><button type="submit" class="btn btn-sm btn-accent ms-2">Send</button>
+                </form>{% endfor %}<form method="POST" action="/cmd" class="d-flex gap-2"><input type="hidden"
+                        name="name" value="{{ c.name }}">
+                    <div class="flex-grow-1"><label class="form-label text-white small mb-1">Custom
+                            Command</label><input type="text" name="custom"
+                            class="form-control form-control-sm bg-light text-dark" placeholder="Raw command"></div>
+                    <button type="submit" class="btn btn-sm btn-accent">Send</button>
+                </form>
+                <form method="POST" action="/cmd" class="d-flex gap-2"><input type="hidden" name="name"
+                        value="{{ c.name }}">
+                    <div class="flex-grow-1"><label class="form-label text-white small mb-1">External IP</label><input
+                            type="text" name="ip" class="form-control form-control-sm bg-light text-dark"
+                            placeholder="IP override"></div>
+                    <div class="flex-grow-1"><label class="form-label text-white small mb-1">External
+                            Command</label><input type="text" name="custom"
+                            class="form-control form-control-sm bg-light text-dark" placeholder="Raw command"></div>
+                    <button type="submit" class="btn btn-sm btn-accent">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>{% endfor %}</div>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.9/dist/hls.min.js"></script>
+<script>const HOST = "{{ host }}"; document.querySelectorAll("video").forEach(v => { const n = v.id.slice(2); const s = `http://${HOST}:8888/${n}/index.m3u8`; if (v.canPlayType("application/vnd.apple.mpegurl")) { v.src = s; v.play() } else if (Hls.isSupported()) { const h = new Hls(); h.loadSource(s); h.attachMedia(v); h.on(Hls.Events.MANIFEST_PARSED, () => v.play()) } }); document.querySelectorAll(".copy-url").forEach(b => { b.addEventListener("click", () => { const u = b.getAttribute("data-url"); navigator.clipboard.writeText(u).then(() => { const o = b.textContent; b.textContent = "Copied"; setTimeout(() => b.textContent = o, 1e3) }) }) });</script>
+{% endblock %}
